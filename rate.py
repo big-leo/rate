@@ -8,15 +8,28 @@ import json
 from datetime import datetime, timedelta
 
 
+PB_CURRENCY = 'UAH,AUD,CAD,CZK,DKK,HUF,ILS,JPY,LVL,LTL,NOK,SKK,SEK,CHF,RUB,GBP,USD,BYR,EUR,GEL,PLZ'
+PB_RATE = 'saleRate,purchaseRate'
+
+
 def using():
     '''help for using'''
+    print('--currency:\n%s\n--rate:\n%s' % (PB_CURRENCY, PB_RATE))
     print('./rate.py --start "01.12.2014" --to "01.12.2015" --currency "USD" --rate "saleRate"')
     sys.exit(0)
 
 
 def validate_opt(start_date, end_date, curr, rate):
     '''validate input options'''
-    pass
+    try:
+        start_date = datetime.strptime(start_date, '%d.%m.%Y')
+        end_date = datetime.strptime(end_date, '%d.%m.%Y')
+    except ValueError:
+        using()
+    if not curr in PB_CURRENCY.split(','):
+        using()
+    if not rate in PB_RATE.split(','):
+        using()
 
 
 def gen_days(start_date, end_date):
@@ -53,8 +66,8 @@ def opt_parse():
         opts, args = getopt.getopt(sys.argv[1:], param1, param2)
     except getopt.GetoptError:
         using()
-    print('opts: ', opts)
-    print('args: ', args)
+    #print('opts: ', opts)
+    #print('args: ', args)
     opts = dict(opts)
     if '--help' in opts:
         using()
@@ -65,12 +78,14 @@ if __name__ == '__main__':
     '''main loop'''
     opts = opt_parse()
     start_date = opts['--start']
-    start_date = datetime.strptime(start_date, '%d.%m.%Y')
     end_date = opts['--to']
-    end_date = datetime.strptime(end_date, '%d.%m.%Y')
     curr = opts['--currency']
     rate = opts['--rate']
+
     validate_opt(start_date, end_date, curr, rate)
+    start_date = datetime.strptime(start_date, '%d.%m.%Y')
+    end_date = datetime.strptime(end_date, '%d.%m.%Y')
+
     days = gen_days(start_date, end_date)
     rates = dict([((get_rate(d, curr, rate)), d) for d in days])
     max_rate = max(rates)
