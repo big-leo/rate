@@ -14,6 +14,11 @@ def using():
     sys.exit(0)
 
 
+def validate_opt(start_date, end_date, curr, rate):
+    '''validate input options'''
+    pass
+
+
 def gen_days(start_date, end_date):
     '''generator for days'''
     next_date = start_date
@@ -29,6 +34,7 @@ def get_rate(date_rate, curr, in_rate):
     response = urlopen(pburl + date_rate)
     data = response.read().decode()
     json_data = json.loads(data)
+    #print(json.dumps(json_data, indent=4))
     for line in json_data['exchangeRate']:
         if line['currency'] == curr:
             rate = line[in_rate]
@@ -64,6 +70,11 @@ if __name__ == '__main__':
     end_date = datetime.strptime(end_date, '%d.%m.%Y')
     curr = opts['--currency']
     rate = opts['--rate']
+    validate_opt(start_date, end_date, curr, rate)
     days = gen_days(start_date, end_date)
-    rates = [(get_rate(d, opts['--currency'], opts['--rate'])) for d in days]
-    print(max(rates))
+    rates = dict([((get_rate(d, curr, rate)), d) for d in days])
+    max_rate = max(rates)
+    max_date = rates[max_rate]
+    max_date = datetime.strptime(max_date, '%d.%m.%Y')
+    max_date = max_date.strftime('%d.%m.%y')
+    print('Most expensive "%s" for %s was %s = %f' % (rate, curr, max_date, max_rate))
