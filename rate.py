@@ -5,6 +5,7 @@ import getopt
 #import threading
 from urllib.request import urlopen
 import json
+from datetime import datetime, timedelta
 
 
 def using():
@@ -13,22 +14,34 @@ def using():
     sys.exit(0)
 
 
+def gen_days(start_date, end_date):
+    '''generator for days'''
+    next_date = start_date
+    while not next_date > end_date:
+        #print(next_date)
+        yield next_date.strftime('%d.%m.%Y')
+        next_date += timedelta(days=1)
+
+
 def get_rate(date_rate, curr, in_rate):
     '''get data from url PrivatBank'''
-    response = urlopen('https://api.privatbank.ua/p24api/exchange_rates?json&date=' + date_rate)
+    pburl = 'https://api.privatbank.ua/p24api/exchange_rates?json&date='
+    response = urlopen(pburl + date_rate)
     data = response.read().decode()
     json_data = json.loads(data)
     for line in json_data['exchangeRate']:
         if line['currency'] == curr:
             rate = line[in_rate]
             break
+    #print(rate)
     return rate
 
 
 def opt_parse():
     '''parsing input options'''
     result = dict()
-    param1 = 's:t:c:r:h'
+    #param1 = 's:t:c:r:h'
+    param1 = ''
     param2 = ['start=', 'to=', 'currency=', 'rate=', 'help']
     try:
         opts, args = getopt.getopt(sys.argv[1:], param1, param2)
@@ -37,7 +50,7 @@ def opt_parse():
     print('opts: ', opts)
     print('args: ', args)
     opts = dict(opts)
-    if '-h' in opts or '--help' in opts:
+    if '--help' in opts:
         using()
     return opts
 
@@ -45,5 +58,12 @@ def opt_parse():
 if __name__ == '__main__':
     '''main loop'''
     opts = opt_parse()
-    for
-    print(get_rate(opts['--start'], opts['--currency'], opts['--rate']))
+    start_date = opts['--start']
+    start_date = datetime.strptime(start_date, '%d.%m.%Y')
+    end_date = opts['--to']
+    end_date = datetime.strptime(end_date, '%d.%m.%Y')
+    curr = opts['--currency']
+    rate = opts['--rate']
+    days = gen_days(start_date, end_date)
+    rates = [(get_rate(d, opts['--currency'], opts['--rate'])) for d in days]
+    print(max(rates))
